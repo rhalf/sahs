@@ -1,97 +1,82 @@
 <template>
   <v-container fluid>
-    <v-card elevation="0">
-      <v-card-title>
-        <v-card-subtitle
-          >Index: <span class="black--text">{{ 0 }}</span></v-card-subtitle
+    <v-row>
+        <!-- <v-btn class="blue white--text" small>
+          <v-icon small>refresh</v-icon>
+        </v-btn> -->
+        <v-menu
+          v-model="datepickerMenu"
+          :close-on-content-click="false"
+          :nudge-right="40"
+          transition="scale-transition"
+          offset-y
+          min-width="290"
         >
-        <v-card-subtitle v-if="devices[0]"
-          >Name:
-          <span class="text-uppercase black--text">{{
-            devices[0].name
-          }}</span></v-card-subtitle
-        >
-        <v-card-subtitle v-if="devices[0]"
-          >Desc:
-          <span class="black--text">{{
-            devices[0].desc
-          }}</span></v-card-subtitle
-        >
-      </v-card-title>
-      <v-divider></v-divider>
-      <v-row>
-        <v-col>
-          <v-text-field
-            class="ma-3"
-            v-model="search"
-            append-icon="mdi-magnify"
-            label="Search"
-            hide-details
-          >
-          </v-text-field>
-        </v-col>
-        <v-col>
-          <v-menu
-            v-model="datepickerMenu"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on, attrs }">
-              <v-text-field
-                class="ma-3"
-                v-model="date"
-                label="Click desired date"
-                prepend-icon="mdi-calendar"
-                readonly
-                v-bind="attrs"
-                v-on="on"
-              ></v-text-field>
-            </template>
-            <v-date-picker
-              elevation="1"
+          <template v-slot:activator="{ on, attrs }">
+            <v-text-field
+              class="mx-6 my-1"
               v-model="date"
-              @click:date="searchDate"
-            ></v-date-picker>
-          </v-menu>
-        </v-col>
-      </v-row>
+              label="Click desired Date"
+              append-icon="mdi-calendar"
+              readonly
+              v-bind="attrs"
+              v-on="on"
+              hide-details
+            ></v-text-field>
+          </template>
+          <v-date-picker
+            elevation="1"
+            v-model="date"
+            @click:date="searchDate"
+          ></v-date-picker>
+        </v-menu>
 
-      <v-data-table
-        :search="search"
-        :headers="headers"
-        :items="datas"
-        :items-per-page="12"
-        class="black--text"
-        :custom-filter="datasFilter"
-        :mobile-breakpoint="0"
-        :loading="load"
-        loading-text="Loading... Please wait"
-        :footer-props="{
-          showFirstLastPage: true,
-          firstIcon: 'mdi-arrow-collapse-left',
-          lastIcon: 'mdi-arrow-collapse-right',
-          prevIcon: 'mdi-minus',
-          nextIcon: 'mdi-plus',
-        }"
-      >
-        <template v-slot:item="props">
-          <tr>
-            <!-- <td>{{  props.item.id }}</td> -->
-            <td>{{ props.item.ts * 1000 | toDateTime }}</td>
-            <td>{{ props.item.te | toDouble }}</td>
-            <td>{{ props.item.td | toDouble }}</td>
-            <td>{{ props.item.ph | toDouble }}</td>
-            <td>{{ props.item.or | toDouble }}</td>
-            <td>{{ props.item.ec | toDouble }}</td>
-            <td>{{ props.item.sa | toDouble }}</td>
-            <td>{{ props.item.do | toDouble }}</td>
-          </tr>
-        </template>
-      </v-data-table>
-    </v-card>
+        <v-text-field
+          class="mx-6 my-1"
+          v-model="search"
+          append-icon="mdi-magnify"
+          label="Search"
+          hide-details
+        >
+        </v-text-field>
+    </v-row>
+    <v-row>
+      <v-col>
+        <v-data-table
+          :search="search"
+          :headers="headers"
+          :items="datas"
+          :items-per-page="12"
+          :multiSort=true
+          class="black--text"
+          :custom-filter="datasFilter"
+          :mobile-breakpoint="0"
+          :loading="load"
+          loading-text="Loading... Please wait"
+          :footer-props="{
+            showFirstLastPage: true,
+            firstIcon: 'mdi-arrow-collapse-left',
+            lastIcon: 'mdi-arrow-collapse-right',
+            prevIcon: 'mdi-minus',
+            nextIcon: 'mdi-plus',
+          }"
+        >
+          <template v-slot:item="props">
+            <tr>
+              <!-- <td>{{  props.item.id }}</td> -->
+              <td>{{ (props.item.ts * 1000) | toDateTime }}</td>
+              <td>{{ props.item.te | toDouble }}</td>
+              <td>{{ props.item.td | toDouble }}</td>
+              <td>{{ props.item.ph | toDouble }}</td>
+              <td>{{ props.item.or | toDouble }}</td>
+              <td>{{ props.item.ec | toDouble }}</td>
+              <td>{{ props.item.sa | toDouble }}</td>
+              <td>{{ props.item.do | toDouble }}</td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
@@ -150,9 +135,11 @@ export default {
     },
     datasFilter(item, search, filter) {
       if (isNaN(search)) {
-        if (this.$options.filters.toDateTime(item).includes(search)) return filter;
+        if (this.$options.filters.toDateTime(item).includes(search))
+          return filter;
       } else if (!isNaN(item)) {
-        if (this.$options.filters.toDouble(item).toString().includes(search)) return filter;
+        if (this.$options.filters.toDouble(item).toString().includes(search))
+          return filter;
       }
     },
   },
@@ -173,3 +160,12 @@ export default {
   },
 };
 </script>
+
+<style scoped>
+thead td {
+  background-color: rgba(128, 192, 255, .2);
+}
+tbody tr:nth-of-type(even) {
+   background-color: rgba(128, 192, 255, .2);
+ }
+</style>

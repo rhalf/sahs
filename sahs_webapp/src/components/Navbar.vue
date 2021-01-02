@@ -20,8 +20,9 @@
         />
       </v-btn>
 
-      <v-btn icon @click="logout()">
+      <v-btn @click="logout()" text>
         <v-icon>exit_to_app</v-icon>
+        Logout
       </v-btn>
     </v-app-bar>
 
