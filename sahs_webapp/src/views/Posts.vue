@@ -56,15 +56,15 @@
         >
           <v-row>
             <v-col>
-              <div class="caption ">Title</div>
+              <div class="caption">Title</div>
               <div v-text="post.title"></div>
             </v-col>
             <v-col>
-              <div class="caption ">Author</div>
+              <div class="caption">Author</div>
               <div v-text="post.author"></div>
             </v-col>
             <v-col>
-              <div class="caption ">Date</div>
+              <div class="caption">Date</div>
               <!-- <div v-text="post.datetime | toDateTime"></div> -->
               <div :text-content.prop="post.datetime | toDateTime"></div>
             </v-col>
@@ -113,10 +113,13 @@ import PostDialogRemove from "../components/PostDialogRemove.vue";
 import PostDialogEdit from "../components/PostDialogEdit.vue";
 import firebase from "../plugins/firebase";
 
-var firestore = firebase.firestore();
+import notify from "@/mixins/notify";
+
+var fire = firebase.firestore();
+// var auth = firebase.auth();
 
 export default {
-  name: "Dashboard",
+  mixins: [notify],
   created() {
     this.queryAll();
   },
@@ -146,7 +149,7 @@ export default {
     },
     queryAll() {
       this.posts = [];
-      firestore
+      fire
         .collection("posts")
         .get()
         .then((querySnapshot) => {
@@ -155,7 +158,8 @@ export default {
             post.id = doc.id;
             this.posts.push(post);
           });
-        });
+        })
+        .catch((error) => this.notifyOpen(error, "error"));
     },
   },
 };
@@ -164,15 +168,15 @@ export default {
 <style scoped>
 .v-card.announcement {
   border-left: 16px solid blue !important;
-  background-color: rgba(0,0,255,.15) !important;
+  background-color: rgba(0, 0, 255, 0.15) !important;
 }
 .v-card.article {
   border-left: 16px solid green !important;
-  background-color: rgba(0,255,0,.15) !important;
+  background-color: rgba(0, 255, 0, 0.15) !important;
 }
 .v-card.question {
   border-left: 16px solid red !important;
-  background-color: rgba(255,0,0,.15) !important;
+  background-color: rgba(255, 0, 0, 0.15) !important;
 }
 
 .v-chip.announcement {

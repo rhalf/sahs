@@ -1,44 +1,44 @@
 <template>
   <v-container fluid>
     <v-row>
-        <!-- <v-btn class="blue white--text" small>
+      <!-- <v-btn class="blue white--text" small>
           <v-icon small>refresh</v-icon>
         </v-btn> -->
-        <v-menu
-          v-model="datepickerMenu"
-          :close-on-content-click="false"
-          :nudge-right="40"
-          transition="scale-transition"
-          offset-y
-          min-width="290"
-        >
-          <template v-slot:activator="{ on, attrs }">
-            <v-text-field
-              class="mx-6 my-1"
-              v-model="date"
-              label="Click desired Date"
-              append-icon="mdi-calendar"
-              readonly
-              v-bind="attrs"
-              v-on="on"
-              hide-details
-            ></v-text-field>
-          </template>
-          <v-date-picker
-            elevation="1"
+      <v-menu
+        v-model="datepickerMenu"
+        :close-on-content-click="false"
+        :nudge-right="40"
+        transition="scale-transition"
+        offset-y
+        min-width="290"
+      >
+        <template v-slot:activator="{ on, attrs }">
+          <v-text-field
+            class="mx-6 my-1"
             v-model="date"
-            @click:date="searchDate"
-          ></v-date-picker>
-        </v-menu>
+            label="Click desired Date"
+            append-icon="mdi-calendar"
+            readonly
+            v-bind="attrs"
+            v-on="on"
+            hide-details
+          ></v-text-field>
+        </template>
+        <v-date-picker
+          elevation="1"
+          v-model="date"
+          @click:date="searchDate"
+        ></v-date-picker>
+      </v-menu>
 
-        <v-text-field
-          class="mx-6 my-1"
-          v-model="search"
-          append-icon="mdi-magnify"
-          label="Search"
-          hide-details
-        >
-        </v-text-field>
+      <v-text-field
+        class="mx-6 my-1"
+        v-model="search"
+        append-icon="mdi-magnify"
+        label="Search"
+        hide-details
+      >
+      </v-text-field>
     </v-row>
     <v-row>
       <v-col>
@@ -47,7 +47,7 @@
           :headers="headers"
           :items="datas"
           :items-per-page="12"
-          :multiSort=true
+          :multiSort="true"
           class="black--text"
           :custom-filter="datasFilter"
           :mobile-breakpoint="0"
@@ -81,24 +81,21 @@
 </template>
 
 <script>
-// // @ is an alias to /src
-import firebase from "../plugins/firebase";
+import notify from "@/mixins/notify";
+import firebase from "@/plugins/firebase";
 
 var database = firebase.database();
 var devicesRef = database.ref("/devices/");
 var datasRef = database.ref("/devices/0/datas");
 
 export default {
+  mixins: [notify],
   created() {
     devicesRef.once("value").then(
       (snapshot) => {
         // if (!snapshot) return;
         this.devices = snapshot.val();
-      },
-      function (error) {
-        console.log(error.message);
-      }
-    );
+      }).catch((error) => this.notifyOpen(error, "error"));
 
     datasRef.on(
       "value",
@@ -108,7 +105,7 @@ export default {
         this.load = false;
       },
       function (error) {
-        console.log(error.message);
+        this.notifyOpen(error, "error");
         this.load = false;
       }
     );
@@ -163,9 +160,9 @@ export default {
 
 <style scoped>
 thead td {
-  background-color: rgba(128, 192, 255, .2);
+  background-color: rgba(128, 192, 255, 0.2);
 }
 tbody tr:nth-of-type(even) {
-   background-color: rgba(128, 192, 255, .2);
- }
+  background-color: rgba(128, 192, 255, 0.2);
+}
 </style>

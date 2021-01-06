@@ -7,7 +7,7 @@
     </v-row>
     <v-row>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text">DateTime</v-card-title>
             <v-card-subtitle class="blue white--text"
@@ -15,25 +15,25 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h2>{{ (data.ts * 1000) | toDateTime }}</h2>
+              <h2>{{ (data[0].ts * 1000) | toDateTime }}</h2>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text">Temperature</v-card-title>
             <v-card-subtitle class="blue white--text">Celcius</v-card-subtitle>
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.te | toDouble }}</h1>
+              <h1>{{ data[0].te | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text"
               >Total Dissolve Solids</v-card-title
@@ -43,13 +43,13 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.td | toDouble }}</h1>
+              <h1>{{ data[0].td | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text">Acidity</v-card-title>
             <v-card-subtitle class="blue white--text"
@@ -57,13 +57,13 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.ph | toDouble }}</h1>
+              <h1>{{ data[0].ph | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text"
               >Oxidation-Reduction Potential (Redox)</v-card-title
@@ -73,13 +73,13 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.or | toDouble }}</h1>
+              <h1>{{ data[0].or | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text"
               >Electric Conductivity</v-card-title
@@ -89,13 +89,13 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.ec | toDouble }}</h1>
+              <h1>{{ data[0].ec | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text">Salinity</v-card-title>
             <v-card-subtitle class="blue white--text"
@@ -103,13 +103,13 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.sa | toDouble }}</h1>
+              <h1>{{ data[0].sa | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
       <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="blue white--text"
               >Dissolve Oxygen</v-card-title
@@ -119,87 +119,25 @@
             >
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.do | toDouble }}</h1>
+              <h1>{{ data[0].do | toDouble }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
       </v-col>
-      <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
+      <!-- ================================================================ -->
+      <v-col v-for="io in ios" v-bind:key="io.id">
+        <v-hover v-slot="{ hover }" v-if="data[0]">
           <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
             <v-card-title class="red white--text"
-              >Switch / Output 0</v-card-title
+              >Output {{ io.id }} - {{ io.label }}</v-card-title
             >
-            <v-card-subtitle class="red white--text"
-              >water pump</v-card-subtitle
-            >
+            <v-card-subtitle class="red white--text">
+              interval : {{ io.interval }} seconds | enabled :
+              {{ io.enabled ? "yes" : "no" }}
+            </v-card-subtitle>
             <v-divider></v-divider>
             <v-card-text align="center">
-              <h1>{{ data.s0 }}</h1>
-            </v-card-text>
-          </v-card>
-        </v-hover>
-      </v-col>
-      <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
-          <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
-            <v-card-title class="red white--text"
-              >Switch / Output 1</v-card-title
-            >
-            <v-card-subtitle class="red white--text"
-              >Led lamp </v-card-subtitle
-            >
-            <v-divider></v-divider>
-            <v-card-text align="center">
-              <h1>{{ data.s1 }}</h1>
-            </v-card-text>
-          </v-card>
-        </v-hover>
-      </v-col>
-      <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
-          <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
-            <v-card-title class="red white--text"
-              >Switch / Output 2</v-card-title
-            >
-            <v-card-subtitle class="red white--text"
-              >Not yet assigned </v-card-subtitle
-            >
-            <v-divider></v-divider>
-            <v-card-text align="center">
-              <h1>{{ data.s2 }}</h1>
-            </v-card-text>
-          </v-card>
-        </v-hover>
-      </v-col>
-      <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
-          <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
-            <v-card-title class="red white--text"
-              >Switch / Output 3</v-card-title
-            >
-            <v-card-subtitle class="red white--text"
-              >Not yet assigned </v-card-subtitle
-            >
-            <v-divider></v-divider>
-            <v-card-text align="center">
-              <h1>{{ data.s3 }}</h1>
-            </v-card-text>
-          </v-card>
-        </v-hover>
-      </v-col>
-      <v-col>
-        <v-hover v-slot="{ hover }" v-if="data">
-          <v-card :elevation="hover ? 5 : 1" class="pa-2" :width="card_size">
-            <v-card-title class="red white--text"
-              >Switch / Output 4</v-card-title
-            >
-            <v-card-subtitle class="red white--text"
-              >Not yet assigned </v-card-subtitle
-            >
-            <v-divider></v-divider>
-            <v-card-text align="center">
-              <h1>{{ data.s4 }}</h1>
+              <h1>{{ io.state ? "on" : "off" }}</h1>
             </v-card-text>
           </v-card>
         </v-hover>
@@ -209,37 +147,58 @@
 </template>
 
 <script>
-import firebase from "../plugins/firebase";
+import notify from "@/mixins/notify";
+import firebase from "@/plugins/firebase";
 
 var database = firebase.database();
+
 var datasRef = database.ref("/devices/0/datas");
+var iosRef = database.ref("/devices/0/io");
 
 export default {
-  name: "Dashboard",
-
+  mixins: [notify],
   created() {
-    var query = datasRef.orderByChild("dt").limitToLast(1).once("value");
+    datasRef
+      .orderByChild("dt")
+      .limitToLast(1)
+      .once("value")
+      .then((snapshot) => {
+        var pObj = snapshot.val();
+        Object.keys(pObj).map((key) => {
+          pObj[key].id = key;
+          this.$set(this.data, 0, pObj[key]);
+        });
+      })
+      .catch((error) => this.notifyOpen(error, "error"));
 
-    query.then(
-      (snapshot) => {
-        var key = Object.keys(snapshot.val());
-        var data = snapshot.val();
-        this.data = data[key];
-      },
-      function (error) {
-        console.log(error.message);
-      }
-    );
+    datasRef.on("child_added", (snapshot) => {
+      if (!this.data) return;
+      if (!this.data[0]) return;
+
+      Object.assign(this.data[0], snapshot.val());
+    });
+    //=============================================
+    iosRef
+      .once("value")
+      .then((snapshot) => {
+        snapshot.forEach((element) => {
+          this.$set(this.ios, element.val().id, element.val());
+        });
+      })
+      .catch((error) => this.notifyOpen(error, "error"));
+
+    iosRef.on("child_changed", (snapshot) => {
+      Object.assign(this.ios[snapshot.val().id], snapshot.val());
+    });
   },
   data() {
     return {
       card_size: 400,
       hover: false,
-      data: null,
+      data: {},
+      ios: {},
     };
   },
-
-  methods: {},
 };
 </script>
 

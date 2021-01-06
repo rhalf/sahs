@@ -29,3 +29,4 @@ See [Configuration Reference](https://cli.vuejs.org/config/).
 #vue add vuetify
 #npm install material-design-icons-iconfont --save
 #npm install firebase
+#npm install vue-tel-input

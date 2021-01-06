@@ -41,12 +41,8 @@ typedef struct Data {
   uint32_t ec = 0;
   uint32_t dio = 0;
   uint32_t sal = 0;
-  uint32_t oc = 0;
-  uint8_t s0 = 0;
-  uint8_t s1 = 0;
-  uint8_t s2 = 0;
-  uint8_t s3 = 0;
-  uint8_t s4 = 0;
+  uint32_t orp = 0;
+  uint32_t out = 0;
 } Data;
 
 volatile Data data;
@@ -93,7 +89,7 @@ void cbCommunicate() {
       //get oc
       apdu1.cClass = 0xD2;
       apdu1.cFunc = 0x02;
-      apdu1.cValue1 = data.oc;
+      apdu1.cValue1 = data.orp;
       break;
     case 5:
       //get do
@@ -126,29 +122,13 @@ void cbCommunicate() {
       apdu1.cFunc = 0x01;
       apdu1.cParam = 0x00;
       break;
+    //*******************************************************
     case 10:
-      //get io1
+      //get io0
       apdu1.cClass = 0xE1;
-      apdu1.cFunc = 0x01;
-      apdu1.cParam = 0x01;
-      break;
-    case 11:
-      //get io2
-      apdu1.cClass = 0xE1;
-      apdu1.cFunc = 0x01;
-      apdu1.cParam = 0x02;
-      break;
-    case 12:
-      //get io3
-      apdu1.cClass = 0xE1;
-      apdu1.cFunc = 0x01;
-      apdu1.cParam = 0x03;
-      break;
-    case 13:
-      //get io4
-      apdu1.cClass = 0xE1;
-      apdu1.cFunc = 0x01;
-      apdu1.cParam = 0x04;
+      apdu1.cFunc = 0x02;
+      apdu1.cParam = 0x00;
+      apdu1.cValue1 = data.out;
       break;
       //=======================================================
   }
@@ -215,11 +195,18 @@ void process(Apdu apdu) {
     //      break;
     case 0xE1:
       if (apdu.cFunc == 0x01) {
-        if (apdu.cParam == 0x00) data.s0 = apdu.cValue1;
-        if (apdu.cParam == 0x01) data.s1 = apdu.cValue1;
-        if (apdu.cParam == 0x02) data.s2 = apdu.cValue1;
-        if (apdu.cParam == 0x03) data.s3 = apdu.cValue1;
-        if (apdu.cParam == 0x04) data.s4 = apdu.cValue1;
+        if (apdu.cParam == 0x00) {
+          for (uint8_t bitIndex = 0; bitIndex < 5; bitIndex++) {
+            if (bitRead(apdu.cValue1, bitIndex) == 1) {
+              terminals[bitIndex].on();
+               bitSet(data.out, bitIndex);
+            }
+            if (bitRead(apdu.cValue1, bitIndex) == 0) {
+              terminals[bitIndex].off();
+               bitClear(data.out, bitIndex);
+            }
+          }
+        }
       }
       break;
   }
@@ -277,12 +264,12 @@ void cbDisplay() {
       u8g2.print(String(data.sal));
 
       u8g2.setCursor(x, 40);
-      u8g2.print(F("S0 :"));
-      u8g2.print(String(data.s0));
+      u8g2.print(F("ORP:"));
+      u8g2.print(String(data.orp));
 
       u8g2.setCursor(x, 50);
-      u8g2.print(F("S1 :"));
-      u8g2.print(String(data.s1));
+      u8g2.print(F("OUT:"));
+      u8g2.print(String(bitRead(data.out, 0)) + String(bitRead(data.out, 1) + String(bitRead(data.out, 2)) + String(bitRead(data.out, 3)) + String(bitRead(data.out, 4))));
       x -= 64;
       //=============================================================
 
@@ -337,37 +324,12 @@ void cbSlowInterrupt() {
   data.tds = analogRead(A6);
   data.ph = analogRead(A7);
   data.tmp = analogRead(A1);
-  data.oc = analogRead(A2);
-  data.ec = analogRead(A3);
-  data.dio = analogRead(A4);
-  data.sal = analogRead(A5);
+  data.orp = 0;
+  data.ec = 0;
+  data.dio = 0;
+  data.sal = 0;
 
-  if (data.s0) terminals[0].on();
-  else terminals[0].off();
-
-  if (data.s1) terminals[1].on();
-  else terminals[1].off();
-
-  if (data.s2) terminals[2].on();
-  else terminals[2].off();
-
-  if (data.s3) terminals[3].on();
-  else terminals[3].off();
-
-  if (data.s4) terminals[4].on();
-  else terminals[4].off();
 }
-
-
-
-void onReceived(void) {
-  //  Serial.print(">>" + protocol.buffer);
-  //  protocol.interpret();
-  //  Serial.print("<<" + protocol.buffer);
-  //  protocol.print(protocol.buffer);
-  //  protocol.buffer = "";
-}
-
 
 
 void onShortPressed(uint8_t pin) {
@@ -376,7 +338,7 @@ void onShortPressed(uint8_t pin) {
 }
 
 void onLongPressed(uint8_t pin) {
-  for (index = 0; index < 4; index++) {
+  for (index = 0; index < 5; index++) {
     if (buttons[index].getPin() == pin) {
       buzzer.play();
       terminals[index].reset();

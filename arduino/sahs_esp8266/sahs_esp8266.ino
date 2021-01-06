@@ -23,9 +23,9 @@ SoftwareSerial ss(D1, D0);
 FirebaseData fbData;
 
 //database
-uint32_t devices_index = 1;
-uint32_t id = 0;
-uint32_t dt = 0;
+//uint32_t devices_index = 1;
+//uint32_t id = 0;
+//uint32_t dt = 0;
 
 typedef struct Data {
   uint32_t ip = 0;
@@ -37,8 +37,7 @@ typedef struct Data {
   uint32_t dio = 0;
   uint32_t sal = 0;
   uint32_t orp = 0;
-  uint8_t s0 = 0;
-  uint8_t s1 = 0;
+
 } Data;
 
 volatile Data data;
@@ -57,11 +56,11 @@ typedef struct Io {
   uint8_t enabled;
   uint8_t state;
   uint32_t interval;
-  uint32_t on[2];
+  //  uint32_t on[2];
 } Io;
 
-const uint8_t IOS_LENGTH = 5;
-Io io[IOS_LENGTH];
+const uint8_t IO_LENGTH = 5;
+Io io[IO_LENGTH];
 
 const long utcOffsetInSeconds = 0;
 //char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
@@ -161,12 +160,31 @@ void process(Apdu apdu) {
       break;
 
     case 0xE1:
-      if (apdu.cRaw[1] == 0x01) {
-        if (apdu.cRaw[2] == 0x00) apdu.cValue1 = io[0].state;
-        if (apdu.cRaw[2] == 0x01) apdu.cValue1 = io[1].state;
-        if (apdu.cRaw[2] == 0x02) apdu.cValue1 = io[2].state;
-        if (apdu.cRaw[2] == 0x03) apdu.cValue1 = io[3].state;
-        if (apdu.cRaw[2] == 0x04) apdu.cValue1 = io[4].state;
+      //read enabled
+      if (apdu.cFunc == 0x01) {
+        if (apdu.cParam == 0x00) {
+          for (uint8_t index = 0; index < IO_LENGTH; index++) {
+            if (io[index].enabled == 1) {
+              bitSet(apdu.cValue1, index);
+            }
+            if (io[index].enabled == 0) {
+              bitClear(apdu.cValue1, index);
+            }
+          }
+        }
+      }
+      //=================================
+      if (apdu.cFunc == 0x02) {
+        if (apdu.cParam == 0x00) {
+          for (uint8_t index = 0; index < IO_LENGTH; index++) {
+            if (bitRead(apdu.cValue1, index) == 1) {
+              io[index].state = 1;
+            }
+            if (bitRead(apdu.cValue1, index) == 0) {
+               io[index].state = 0;
+            }
+          }
+        }
       }
       break;
   }
@@ -180,17 +198,17 @@ void cbDatabaseWrite() {
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   //===================================================================
-  FirebaseJson json;
-  json.set("ts", (int)data.ts);
-  json.set("te", (int)data.tmp);
-  json.set("do", (int) data.dio);
-  json.set("ec", (int)data.ec);
-  json.set("td", (int)data.tds);
-  json.set("or", (int)data.orp);
-  json.set("sa", (int)data.sal);
-  json.set("ph", (int)data.ph);
+  FirebaseJson json1;
+  json1.set("ts", (int)data.ts);
+  json1.set("te", (int)data.tmp);
+  json1.set("do", (int)data.dio);
+  json1.set("ec", (int)data.ec);
+  json1.set("td", (int)data.tds);
+  json1.set("or", (int)data.orp);
+  json1.set("sa", (int)data.sal);
+  json1.set("ph", (int)data.ph);
 
-  if (Firebase.pushJSON(fbData, "/" + db_root + "/" + db_id + "/" + db_datas + "/", json)) {
+  if (Firebase.pushJSON(fbData, "/" + db_root + "/" + db_id + "/" + db_datas + "/", json1)) {
     //    Serial.println(fbData.dataPath());
     //    Serial.println(fbData.pushName());
     //    Serial.println(fbData.dataPath() + "/" + fbData.pushName());
@@ -198,12 +216,13 @@ void cbDatabaseWrite() {
     Serial.println(fbData.errorReason());
   }
 
-  if (Firebase.pushJSON(fbData, "/" + db_root + "/" + db_id + "/" + db_datas + "/", json)) {
-    //    Serial.println(fbData.dataPath());
-    //    Serial.println(fbData.pushName());
-    //    Serial.println(fbData.dataPath() + "/" + fbData.pushName());
-  } else {
-    Serial.println(fbData.errorReason());
+  for (uint8_t index = 0; index < IO_LENGTH; index++) {
+    if (Firebase.setInt(fbData, "/" + db_root + "/" + db_id + "/io/" + String(index) + "/state", io[index].state)) {
+
+    } else {
+      Serial.println(fbData.errorReason());
+    }
+    delay(100);
   }
 }
 
@@ -213,7 +232,7 @@ void cbDatabaseRead() {
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   //===================================================================
-  for (uint8_t index = 0; index < IOS_LENGTH; index++) {
+  for (uint8_t index = 0; index < IO_LENGTH; index++) {
     if (Firebase.getJSON(fbData, "/" + db_root + "/" + db_id + "/io/" + String(index))) {
       //Success
       //Serial.print("Get variant data success, type = ");
@@ -224,11 +243,20 @@ void cbDatabaseRead() {
 
         fj.get(fjd, "enabled");
         io[index].enabled = fjd.intValue;
-        fj.get(fjd, "state");
-        io[index].state = fjd.intValue;
+        //        fj.get(fjd, "state");
+        //        io[index].state = fjd.intValue;
         fj.get(fjd, "interval");
         io[index].interval = fjd.intValue;
 
+        Serial.print("io:");
+        Serial.print(index);
+        Serial.print(",enabled:");
+        Serial.print(io[index].enabled);
+        Serial.print(",state:");
+        Serial.print(io[index].state);
+        Serial.print(",interval:");
+        Serial.print(io[index].interval);
+        Serial.println();
         //        fj.get(fjd, "on");
         //        FirebaseJsonArray arr;
         //        fjd.getArray(arr);
@@ -253,8 +281,8 @@ void setup() {
   tWifi.begin(Timer::ONCE, 1000, cbWifi);
 
   tCommunicate.begin(Timer::FOREVER, 1000, cbCommunicate);
-  tDatabaseRead.begin(Timer::FOREVER, 10, cbDatabaseRead);
-  tDatabaseWrite.begin(Timer::FOREVER, 120, cbDatabaseWrite);
+  tDatabaseRead.begin(Timer::FOREVER, 5, cbDatabaseRead);
+  tDatabaseWrite.begin(Timer::FOREVER, 10, cbDatabaseWrite);
 
   tWifi.start();
   tCommunicate.start();

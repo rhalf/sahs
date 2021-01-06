@@ -11,13 +11,14 @@
               0.0.1
             </v-toolbar-title>
           </v-app-bar>
-          <form class="px-16 pt-6">
+          <v-form class="px-16 pt-6" ref="form" v-model="valid">
             <v-text-field
               type="email"
               v-model="email"
               label="E-mail"
-              @blur="checkEmail()"
               ref="email"
+              counter="40"
+              :rules="emailRules"
               required
             >
             </v-text-field>
@@ -30,6 +31,8 @@
               v-model="password"
               label="Password"
               ref="password"
+              counter="40"
+              :rules="passwordRules"
               required
             >
             </v-text-field>
@@ -42,7 +45,7 @@
               ></v-checkbox>
               <v-spacer></v-spacer>
             </v-row>
-          </form>
+          </v-form>
           <!-- <v-divider></v-divider>
           <v-container>
           <v-row>
@@ -65,15 +68,6 @@
           </v-row>
         </v-container> -->
 
-          <v-snackbar v-model="snackbar.show" :color="snackbar.state"
-            >{{ snackbar.message }}
-            <template v-slot:action="{ attrs }">
-              <v-btn text v-bind="attrs" @click="snackbar.show = false"
-                >Close
-              </v-btn>
-            </template>
-          </v-snackbar>
-
           <!-- <v-alert class="mx-6" dense v-show="error.show" v-bind:state="error.state" >{{error.message}}</v-alert> -->
           <v-app-bar class="blue lighten-1 overflow hidden bottom" flat dark>
             <v-btn text @click="signup()">Signup</v-btn>
@@ -91,16 +85,25 @@
 </template>
 
 <script>
-import firebase from "../plugins/firebase";
+import notify from "@/mixins/notify";
+import firebase from "@/plugins/firebase";
+var fire = firebase.firestore();
+var auth = firebase.auth();
 
 export default {
+  mixins: [notify],
   created() {
     if (localStorage.getItem("check") == "true") this.check = true;
     else this.check = false;
     this.email = localStorage.getItem("email");
-    // this.password = localStorage.getItem("password");
+    this.password = localStorage.getItem("password");
 
-    if (firebase.auth().currentUser) this.$router.push("/dashboard");
+    if (auth.currentUser) {
+      if (auth.currentUser.emailVerified)
+        this.$router
+          .push("/dashboard")
+          .catch((error) => this.notifyOpen(error, "error"));
+    }
   },
   mounted() {
     if (this.$refs) {
@@ -109,129 +112,101 @@ export default {
   },
   data() {
     return {
-      email: "",
-      password: "",
-      password_visibility: true,
+      valid: false,
       check: false,
-      snackbar: {
-        message: "",
-        state: "success",
-        show: false,
-      },
+      password_visibility: true,
+      password: "",
+      passwordRules: [
+        (v) => !!v || "Password is required",
+        (v) => v.length > 5 || "Password must not be less than 6 characters",
+      ],
+      email: "",
+      emailRules: [
+        (v) => !!v || "E-mail is required",
+        (v) => /.+@.+/.test(v) || "E-mail must be valid",
+      ],
     };
   },
   methods: {
-    signGoogle: function () {
-      // var provider = new firebase.auth().GoogleAuthProvider();
-      // firebase.auth().signInWithRedirect(provider);
+    // signGoogle: function () {
+    //   var provider = new auth.GoogleAuthProvider();
+    //   auth.signInWithRedirect(provider);
 
-      // firebase.auth().getRedirectResult().then(function(result) {
-      //   if (result.credential) {
-      //     // This gives you a Google Access Token. You can use it to access the Google API.
-      //     var token = result.credential.accessToken;
-      //     console.log("toker", token);
-      //   }
-      //   // The signed-in user info.
-      //   // var user = result.user;
-      //    console.log("user", result.user);
+    //   auth.getRedirectResult().then(function(result) {
+    //     if (result.credential) {
+    //       // This gives you a Google Access Token. You can use it to access the Google API.
+    //       var token = result.credential.accessToken;
+    //       console.log("toker", token);
+    //     }
+    //     // The signed-in user info.
+    //     // var user = result.user;
+    //      console.log("user", result.user);
 
-      // }).catch(function(error) {
-      this.snackbar.message = "Google signin is not yet ready!";
-      this.snackbar.state = "error";
-      this.snackbar.show = true;
-    },
-    signFacebook() {
-      this.snackbar.message = "Facebook signin is not yet ready!";
-      this.snackbar.state = "error";
-      this.snackbar.show = true;
-    },
+    //   }).catch(function(error) {
+    //   this.$store.dispatch("snackbarOpen", {
+    //     message: "Google signin is not yet ready!",
+    //     status: "error",
+    //     visible: true,
+    //   });
+    // },
+    // signFacebook() {
+    //   this.$store.dispatch("snackbarOpen", {
+    //     message: "Facebook signin is not yet ready!",
+    //     status: "error",
+    //     visible: true,
+    //   });
+    // },
     signup() {
-      this.$router.push("/signup");
+      this.$router
+        .push("/signup")
+        .catch((error) => this.notifyOpen(error, "error"));
     },
     submit: function () {
-      if (!this.checkEmail()) return;
-      if (!this.checkPassword()) return;
+      this.$refs.form.validate();
+      if (!this.valid) return;
 
       if (this.check) {
         localStorage.setItem("check", this.check);
         localStorage.setItem("email", this.email);
-        // localStorage.setItem("password", this.password);
+        localStorage.setItem("password", this.password);
       } else {
         localStorage.setItem("check", this.check);
         localStorage.setItem("email", "");
-        // localStorage.setItem("password", '');
+        localStorage.setItem("password", "");
       }
 
       firebase
         .auth()
         .signInWithEmailAndPassword(this.email, this.password)
-        .then(
-          () => {
-            if (!firebase.auth().currentUser.emailVerified) {
-              this.snackbar.message = "Email is not verified!";
-              this.snackbar.state = "warning";
-              this.snackbar.show = true;
-              return;
-            }
-            this.$router.push("/dashboard");
-          },
-          (error) => {
-            this.snackbar.message = error;
-            this.snackbar.state = "error";
-            this.snackbar.show = true;
+        .then(() => {
+          const increment = firebase.firestore.FieldValue.increment(1);
+          var docRef = fire.collection("users").doc(auth.currentUser.uid);
+          docRef
+            .update({ logins: increment, dtLogged: new Date().getTime() })
+            .catch((error) => this.notifyOpen(error, "error"));
+
+          if (auth.currentUser.emailVerified) {
+            this.$router
+              .push("/dashboard")
+              .catch((error) => this.notifyOpen(error, "error"));
+          } else {
+            this.notifyOpen("Email is not verified!", "warning");
           }
-        );
+        })
+        .catch((error) => this.notifyOpen(error, "error"));
     },
     forgot: function () {
-      if (!this.checkEmail()) return;
+      if (!this.valid) return;
       firebase
         .auth()
         .sendPasswordResetEmail(this.email)
-        .then(
-          () => {
-            this.snackbar.message =
-              "Password reset has been sent to your email!";
-            this.snackbar.state = "success";
-            this.snackbar.show = true;
-          },
-          (error) => {
-            this.snackbar.message = error;
-            this.snackbar.state = "error";
-            this.snackbar.show = true;
-          }
-        );
-    },
-    checkPassword: function () {
-      if (this.password.length == 0) {
-        this.snackbar.message = "Password could not be empty!";
-        this.snackbar.state = "warning";
-        this.snackbar.show = true;
-        this.$refs.password.focus();
-        return false;
-      }
-      if (this.password.length < 6) {
-        this.snackbar.message = "Password is less than 6 letters!";
-        this.snackbar.state = "warning";
-        this.snackbar.show = true;
-        this.$refs.password.focus();
-        return false;
-      }
-      this.snackbar.show = false;
-      return true;
-    },
-    checkEmail: function () {
-      var re = /\S+@\S+\.\S+/;
-      if (!re.test(this.email)) {
-        this.snackbar.message = "Not a valid email!";
-        this.snackbar.state = "warning";
-        this.snackbar.show = true;
-
-        this.$refs.email.focus();
-        return false;
-      }
-
-      this.snackbar.show = false;
-      return true;
+        .then(() => {
+          this.notifyOpen(
+            "Password reset has been sent to your email!",
+            "success"
+          );
+        })
+        .catch((error) => this.notifyOpen(error, "error"));
     },
   },
 };

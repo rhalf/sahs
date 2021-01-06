@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
+
 import Dashboard from '../views/Dashboard.vue'
 import Gallery from '../views/Gallery.vue'
 import Posts from '../views/Posts.vue'
@@ -7,7 +8,8 @@ import Datas from '../views/Datas.vue'
 import About from '../views/About.vue'
 import Signin from '../views/Signin.vue'
 import Signup from '../views/Signup.vue'
-// import TradingView from '../views/TradingView.vue'
+import Users from '../views/Users.vue'
+import Controls from '../views/Controls.vue'
 import firebase from '../plugins/firebase'
 
 
@@ -28,6 +30,7 @@ const routes = [
     component: Signin,
     meta: {
       authenticated: false,
+
     }
   },
   {
@@ -36,6 +39,7 @@ const routes = [
     component: Signup,
     meta: {
       authenticated: false,
+
     }
   },
   {
@@ -44,6 +48,7 @@ const routes = [
     component: Dashboard,
     meta: {
       authenticated: true,
+
     }
   },
   {
@@ -52,6 +57,7 @@ const routes = [
     component: Gallery,
     meta: {
       authenticated: true,
+
     }
   },
   {
@@ -60,12 +66,30 @@ const routes = [
     component: Posts,
     meta: {
       authenticated: true,
+
     }
   },
   {
     path: '/datas',
     name: 'Datas',
     component: Datas,
+    meta: {
+      authenticated: true,
+
+    }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: Users,
+    meta: {
+      authenticated: true,
+    }
+  },
+  {
+    path: '/controls',
+    name: 'Controls',
+    component: Controls,
     meta: {
       authenticated: true,
     }
@@ -88,18 +112,25 @@ const router = new VueRouter({
 
 
 router.beforeEach((to, from, next) => {
-  firebase.auth().onAuthStateChanged((theUser) => {
+  firebase.auth().onAuthStateChanged(() => {
     if (to.matched.some((record) => record.meta.authenticated)) {
-      if (theUser) {
-        next()
+
+      if (firebase.auth().currentUser) {
+        if (firebase.auth().currentUser.emailVerified) {
+          next()
+        } else{
+          firebase.auth().signOut();
+          next('/')
+        }
       } else {
+        firebase.auth().signOut();
         next('/')
       }
     } else {
       next()
     }
   }, (error) => {
-    console.log(error)
+    console.log(error.message)
   })
 })
 

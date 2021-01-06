@@ -37,11 +37,10 @@
 </template>
 
 <script>
-// // @ is an alias to /src
-// import HelloWorld from '@/components/HelloWorld.vue'
+import notify from "@/mixins/notify";
 
 export default {
-  name: "gallery",
+  mixins: [notify],
   data() {
     return {
       hover: false,

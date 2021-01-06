@@ -96,9 +96,9 @@ export default {
       firestore
       .collection("posts")
       .add(this.post)
-      .then(function(docRef) {
+      .then(function(doc) {
         this.post = {}
-        console.log("Document written with ID: ", docRef.id);
+        console.log("Document written with ID: ", doc.id);
       })
       .catch(function(error) {
         console.error("Error adding document: ", error);

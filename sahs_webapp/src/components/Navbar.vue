@@ -26,16 +26,23 @@
       </v-btn>
     </v-app-bar>
 
-    <v-navigation-drawer v-model="drawer" app dark class="blue lighten-1" width="300">
+    <v-navigation-drawer
+      v-model="drawer"
+      app
+      dark
+      class="blue lighten-1"
+      width="300"
+    >
       <template v-slot:prepend>
-        <v-list-item two-line>
+        <v-list-item three-line>
           <v-list-item-avatar>
             <!-- <img v-if="user" v-bind:src="user.photoURL" onerror="./assets/user.png"> -->
             <img src="../assets/user.jpg" />
           </v-list-item-avatar>
           <v-list-item-content>
-            <v-list-item-title v-if="user">{{user.email}}</v-list-item-title>
-            <v-list-item-title v-if="user"> logged in </v-list-item-title>
+            <v-list-item-title>{{ user.displayName }}</v-list-item-title>
+            <v-list-item-title>{{ user.email }}</v-list-item-title>
+            <v-list-item-title>{{ user.privilege }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </template>
@@ -43,7 +50,7 @@
       <v-list>
         <v-list-item-group>
           <v-list-item
-            v-for="link in links"
+            v-for="link in filterNavs"
             :key="link.text"
             router
             :to="link.route"
@@ -61,31 +68,69 @@
   </div>
 </template>
 <script>
+import notify from "@/mixins/notify";
 import firebase from "../plugins/firebase";
+var fire = firebase.firestore();
+var auth = firebase.auth();
 
 export default {
+  mixins: [notify],
   created() {
-    firebase.auth().onAuthStateChanged(
-      (theUser) => {
-        this.user = theUser;
-      },
-      (error) => {
-        console.log(error);
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        var docRef = fire.collection("users").doc(user.uid);
+
+        docRef
+          .get()
+          .then((doc) => {
+            this.$store.dispatch("setUser", doc.data());
+            this.user = doc.data();
+            // console.log(this.user);
+          })
+          .catch(function (error) {
+            this.notifyOpen(error, "error");
+          });
+      } else {
+        this.user = null;
       }
-    );
+    });
   },
+
   data() {
     return {
       user: {},
       drawer: false,
       links: [
-        { icon: "dashboard", text: "Dashboard", route: "/dashboard" },
-        { icon: "notes", text: "Posts", route: "/posts" },
-        { icon: "image", text: "Gallery", route: "/gallery" },
-        { icon: "mdi-database", text: "Datas", route: "/datas" },
-        { icon: "mdi-information", text: "About", route: "/about" },
+        {
+          icon: "dashboard",
+          text: "Dashboard",
+          route: "/dashboard",
+          admin: false,
+        },
+        { icon: "notes", text: "Posts", route: "/posts", admin: false },
+        { icon: "image", text: "Gallery", route: "/gallery", admin: false },
+        { icon: "mdi-database", text: "Datas", route: "/datas", admin: false },
+        { icon: "settings", text: "Controls", route: "/controls", admin: false },
+        {
+          icon: "mdi-information",
+          text: "About",
+          route: "/about",
+          admin: false,
+        },
+        { icon: "person", text: "Users", route: "/users", admin: true },
       ],
     };
+  },
+  computed: {
+    filterNavs() {
+      if (this.user.privilege == "admin") {
+        return this.links;
+      } else {
+        return this.links.filter(function (link) {
+          if (link.admin == false) return link;
+        });
+      }
+    },
   },
   methods: {
     logout: function () {
@@ -95,7 +140,7 @@ export default {
         .then(
           () => {},
           (error) => {
-            console.log(error);
+            this.notifyOpen(error, "error");
           }
         );
     },
