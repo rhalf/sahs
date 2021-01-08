@@ -11,6 +11,7 @@ Timer tCommunicate(Timer::MILLIS);
 Timer tDatabaseRead(Timer::SECONDS);
 Timer tDatabaseWrite(Timer::SECONDS);
 
+
 SoftwareSerial ss(D1, D0);
 
 //1. Change the following info
@@ -193,6 +194,7 @@ void process(Apdu apdu) {
 }
 
 void cbDatabaseWrite() {
+  digitalWrite(LED_BUILTIN, HIGH);
   //Communicating with database
   Serial.println("cbDatabaseWrite started");
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
@@ -224,9 +226,12 @@ void cbDatabaseWrite() {
     }
     delay(100);
   }
+
+   digitalWrite(LED_BUILTIN, LOW);
 }
 
 void cbDatabaseRead() {
+   digitalWrite(LED_BUILTIN, HIGH);
   //Communicating with database
   Serial.println("cbDatabaseRead started");
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
@@ -273,11 +278,15 @@ void cbDatabaseRead() {
       Serial.println(fbData.errorReason());
     }
   }
+   digitalWrite(LED_BUILTIN, LOW);
 }
 
 
 
 void setup() {
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
+  
   tWifi.begin(Timer::ONCE, 1000, cbWifi);
 
   tCommunicate.begin(Timer::FOREVER, 1000, cbCommunicate);
@@ -292,6 +301,8 @@ void setup() {
   Serial.begin(9600);
   ss.begin(9600);
   randomSeed(analogRead(A0));
+
+  
 }
 
 void loop() {

@@ -94,6 +94,11 @@ export default {
         this.user = null;
       }
     });
+
+    setInterval(() => {
+      var docRef = fire.collection("users").doc(auth.currentUser.uid);
+      docRef.update({ dtLogged: new Date().getTime() });
+    }, 30000);
   },
 
   data() {
@@ -110,7 +115,12 @@ export default {
         { icon: "notes", text: "Posts", route: "/posts", admin: false },
         { icon: "image", text: "Gallery", route: "/gallery", admin: false },
         { icon: "mdi-database", text: "Datas", route: "/datas", admin: false },
-        { icon: "settings", text: "Controls", route: "/controls", admin: false },
+        {
+          icon: "settings",
+          text: "Controls",
+          route: "/controls",
+          admin: false,
+        },
         {
           icon: "mdi-information",
           text: "About",
