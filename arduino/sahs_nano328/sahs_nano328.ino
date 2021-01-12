@@ -142,6 +142,7 @@ void cbCommunicate() {
 
     Apdu apdu2(buffer);
     if (apdu2.checkSum()) process(apdu2);
+    else Serial.println("Wrong checksum!)"
   }
 
 }
