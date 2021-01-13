@@ -19,6 +19,17 @@
 #include<Timestamp.h>
 #include<Apdu.h>
 
+#include <EEPROM.h>
+#include "GravityTDS.h"
+#define TdsSensorPin A6
+GravityTDS gravityTds;
+float temperature = 28.71;
+
+#include "DFRobot_PH.h"
+#define PhSensorPin A7
+float voltage;
+DFRobot_PH ph;
+
 U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, /* clock=*/ 8, /* data=*/ 7, /* CS=*/ 4, /* reset=*/ 100);
 Timer tDisplay(Timer::MILLIS), tFastInterrupt(Timer::MILLIS), tSlowInterrupt(Timer::MILLIS), tCommunicate(Timer::MILLIS);
 Terminal terminals[] = {Terminal(5), Terminal(6), Terminal(9), Terminal(10), Terminal(11)};
@@ -244,33 +255,33 @@ void cbDisplay() {
       x = 0;
       u8g2.setCursor( x , 20);
       u8g2.print(F("TMP:"));
-      u8g2.print(String(data.tmp));
+      u8g2.print(String(data.tmp / 100));
 
       u8g2.setCursor(x, 30);
       u8g2.print(F("TDS:"));
-      u8g2.print(String(data.tds));
+      u8g2.print(String((double)data.tds / 100));
 
       u8g2.setCursor(x, 40);
       u8g2.print(F("PH :"));
-      u8g2.print(String(data.ph));
+      u8g2.print(String((double)data.ph / 100));
 
       u8g2.setCursor(x, 50);
       u8g2.print(F("EC :"));
-      u8g2.print(String(data.ec));
+      u8g2.print(String((double)data.ec / 100));
 
       //=============================================================
       x += 64;
       u8g2.setCursor( x , 20);
       u8g2.print(F("DO :"));
-      u8g2.print(String(data.dio));
+      u8g2.print(String((double)data.dio / 100));
 
       u8g2.setCursor(x, 30);
       u8g2.print(F("SAL:"));
-      u8g2.print(String(data.sal));
+      u8g2.print(String((double)data.sal / 100));
 
       u8g2.setCursor(x, 40);
       u8g2.print(F("ORP:"));
-      u8g2.print(String(data.orp));
+      u8g2.print(String((double)data.orp / 100));
 
       u8g2.setCursor(x, 50);
       u8g2.print(F("OUT:"));
@@ -325,10 +336,18 @@ void cbSlowInterrupt() {
   //data.ip = randData;
   //data.dio = randData;
 
+  //temperature = readTemperature();  //add your temperature sensor and read it
+  gravityTds.setTemperature(temperature);  // set the temperature and execute temperature compensation
+  gravityTds.update();  //sample and calculate
+
+
+  voltage = analogRead(PhSensorPin) / 1024.0 * 5000; // read the voltage
+
+
   data.ts += 1;
-  data.tds = analogRead(A6);
-  data.ph = analogRead(A7);
-  data.tmp = analogRead(A1);
+  data.tds = gravityTds.getTdsValue() * 100;
+  data.ph = ph.readPH(voltage, temperature) * 100;
+  data.tmp = temperature * 100;
   data.orp = 0;
   data.ec = 0;
   data.dio = 0;
@@ -354,6 +373,14 @@ void onLongPressed(uint8_t pin) {
 void setup() {
   // put your setup code here, to run once:
   buzzer.play();
+
+  gravityTds.setPin(TdsSensorPin);
+  gravityTds.setAref(5.0);  //reference voltage on ADC, default 5.0V on Arduino UNO
+  gravityTds.setAdcRange(1024);  //1024 for 10bit ADC;4096 for 12bit ADC
+  gravityTds.begin();  //initialization
+
+  ph.begin();
+
   Serial.begin(9600);
   esp8266.begin(9600);
   //protocol.onReceived(onReceived);

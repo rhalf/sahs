@@ -113,7 +113,7 @@ void send(byte * data, uint8_t length) {
 
 void process(Apdu apdu) {
 
-  switch (apdu.cRaw[0]) {
+  switch (apdu.cClass) {
     case 0xA0:
       if (apdu.cRaw[1] == 0x01) {
         apdu.cValue1 = data.ts;
@@ -163,6 +163,7 @@ void process(Apdu apdu) {
     case 0xE1:
       //read enabled
       if (apdu.cFunc == 0x01) {
+        //        Serial.println(apdu.toString())
         if (apdu.cParam == 0x00) {
           for (uint8_t index = 0; index < IO_LENGTH; index++) {
             if (io[index].enabled == 1) {
@@ -182,7 +183,7 @@ void process(Apdu apdu) {
               io[index].state = 1;
             }
             if (bitRead(apdu.cValue1, index) == 0) {
-               io[index].state = 0;
+              io[index].state = 0;
             }
           }
         }
@@ -190,13 +191,13 @@ void process(Apdu apdu) {
       break;
   }
   apdu.generate();
+  if (apdu.cClass == 0xE1) Serial.println(apdu.toString());
   send(apdu.cRaw, Apdu::SIZE);
 }
 
 void cbDatabaseWrite() {
   digitalWrite(LED_BUILTIN, HIGH);
   //Communicating with database
-  Serial.println("cbDatabaseWrite started");
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   //===================================================================
@@ -227,13 +228,12 @@ void cbDatabaseWrite() {
     delay(100);
   }
 
-   digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 void cbDatabaseRead() {
-   digitalWrite(LED_BUILTIN, HIGH);
+  digitalWrite(LED_BUILTIN, HIGH);
   //Communicating with database
-  Serial.println("cbDatabaseRead started");
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   //===================================================================
@@ -253,15 +253,15 @@ void cbDatabaseRead() {
         fj.get(fjd, "interval");
         io[index].interval = fjd.intValue;
 
-        Serial.print("io:");
-        Serial.print(index);
-        Serial.print(",enabled:");
-        Serial.print(io[index].enabled);
-        Serial.print(",state:");
-        Serial.print(io[index].state);
-        Serial.print(",interval:");
-        Serial.print(io[index].interval);
-        Serial.println();
+        //        Serial.print("io:");
+        //        Serial.print(index);
+        //        Serial.print(",enabled:");
+        //        Serial.print(io[index].enabled);
+        //        Serial.print(",state:");
+        //        Serial.print(io[index].state);
+        //        Serial.print(",interval:");
+        //        Serial.print(io[index].interval);
+        //        Serial.println();
         //        fj.get(fjd, "on");
         //        FirebaseJsonArray arr;
         //        fjd.getArray(arr);
@@ -278,7 +278,7 @@ void cbDatabaseRead() {
       Serial.println(fbData.errorReason());
     }
   }
-   digitalWrite(LED_BUILTIN, LOW);
+  digitalWrite(LED_BUILTIN, LOW);
 }
 
 
@@ -286,7 +286,7 @@ void cbDatabaseRead() {
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
-  
+
   tWifi.begin(Timer::ONCE, 1000, cbWifi);
 
   tCommunicate.begin(Timer::FOREVER, 1000, cbCommunicate);
@@ -302,7 +302,7 @@ void setup() {
   ss.begin(9600);
   randomSeed(analogRead(A0));
 
-  
+
 }
 
 void loop() {
